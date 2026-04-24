@@ -16,9 +16,24 @@ const sampleDataset = [
   },
 ];
 
+const repoCatalogFallback = [
+  { label: "示例数据 sample-data.json", path: "sample-data.json" },
+  { label: "all_poems 示例库", path: "all_poems/tang_sample.json" },
+];
+
+let activeDataset = [];
+let activeDatasetLabel = "未导入";
+
 const datasetInput = document.querySelector("#datasetInput");
 const datasetStatus = document.querySelector("#datasetStatus");
 const loadSampleButton = document.querySelector("#loadSampleButton");
+const loadTextareaButton = document.querySelector("#loadTextareaButton");
+const fileInput = document.querySelector("#fileInput");
+const loadFileButton = document.querySelector("#loadFileButton");
+const repoFileSelect = document.querySelector("#repoFileSelect");
+const repoPathInput = document.querySelector("#repoPathInput");
+const loadRepoButton = document.querySelector("#loadRepoButton");
+const refreshRepoListButton = document.querySelector("#refreshRepoListButton");
 const addRuleButton = document.querySelector("#addRuleButton");
 const searchButton = document.querySelector("#searchButton");
 const resultCount = document.querySelector("#resultCount");
@@ -77,6 +92,75 @@ function parseDataset(rawInput) {
   });
 }
 
+function updateDatasetStatus(count, sourceLabel = activeDatasetLabel) {
+  datasetStatus.textContent = `当前数据源：${sourceLabel}，共 ${count} 首诗词`;
+}
+
+function setActiveDataset(dataset, sourceLabel) {
+  activeDataset = dataset;
+  activeDatasetLabel = sourceLabel;
+  updateDatasetStatus(dataset.length, sourceLabel);
+}
+
+function showError(message) {
+  resultCount.textContent = "0 条结果";
+  resultList.innerHTML = `<div class="empty-state">${escapeHtml(message)}</div>`;
+}
+
+function showReadyState(message = "数据已导入，可以开始检索。") {
+  resultCount.textContent = "0 条结果";
+  resultList.innerHTML = `<div class="empty-state">${escapeHtml(message)}</div>`;
+}
+
+function populateRepoFileOptions(files) {
+  const mergedFiles = files.length ? files : repoCatalogFallback;
+
+  repoFileSelect.innerHTML = '<option value="">请选择仓库数据文件</option>';
+  mergedFiles.forEach((file) => {
+    const option = document.createElement("option");
+    option.value = file.path;
+    option.textContent = file.label || file.path;
+    repoFileSelect.appendChild(option);
+  });
+}
+
+async function loadRepoCatalog() {
+  try {
+    const response = await fetch("./all_poems/catalog.json", { cache: "no-store" });
+    if (!response.ok) {
+      throw new Error("未找到目录清单");
+    }
+
+    const files = await response.json();
+    if (!Array.isArray(files)) {
+      throw new Error("目录清单格式错误");
+    }
+
+    populateRepoFileOptions(files);
+  } catch (_error) {
+    populateRepoFileOptions([]);
+  }
+}
+
+async function loadDatasetFromText(rawInput, sourceLabel) {
+  const dataset = parseDataset(rawInput);
+  setActiveDataset(dataset, sourceLabel);
+  return dataset;
+}
+
+function normalizeRepoPath(targetPath) {
+  if (
+    targetPath.startsWith("https://github.com/") &&
+    targetPath.includes("/blob/")
+  ) {
+    return targetPath
+      .replace("https://github.com/", "https://raw.githubusercontent.com/")
+      .replace("/blob/", "/");
+  }
+
+  return targetPath;
+}
+
 function getSelectedFields() {
   return [...document.querySelectorAll('input[name="searchField"]:checked')].map(
     (input) => input.value,
@@ -131,6 +215,10 @@ function matchField(text, rules) {
 }
 
 function searchDataset(dataset, fields, lineLengthFilter, rules) {
+  if (!dataset.length) {
+    throw new Error("请先导入一份诗词数据");
+  }
+
   if (!fields.length) {
     throw new Error("请至少选择一个检索范围");
   }
@@ -217,32 +305,92 @@ function renderResults(results) {
     .join("");
 }
 
-function updateDatasetStatus(count) {
-  datasetStatus.textContent = `已导入 ${count} 首诗词`;
+async function handleTextareaLoad() {
+  try {
+    const text = datasetInput.value.trim();
+    if (!text) {
+      throw new Error("请先粘贴 JSON 数据");
+    }
+
+    await loadDatasetFromText(text, "手动粘贴 JSON");
+    showReadyState();
+  } catch (error) {
+    showError(error.message);
+  }
+}
+
+async function handleFileLoad() {
+  try {
+    const [file] = fileInput.files;
+    if (!file) {
+      throw new Error("请先选择一个 JSON 文件");
+    }
+
+    const text = await file.text();
+    await loadDatasetFromText(text, `本地文件 ${file.name}`);
+    datasetInput.value = text;
+    showReadyState();
+  } catch (error) {
+    showError(error.message);
+  }
+}
+
+async function handleRepoLoad() {
+  try {
+    const selectedPath = repoFileSelect.value.trim();
+    const inputPath = repoPathInput.value.trim();
+    const targetPath = normalizeRepoPath(inputPath || selectedPath);
+
+    if (!targetPath) {
+      throw new Error("请先选择或填写仓库 JSON 路径");
+    }
+
+    const response = await fetch(targetPath, { cache: "no-store" });
+    if (!response.ok) {
+      throw new Error(`读取失败：${targetPath}`);
+    }
+
+    const text = await response.text();
+    await loadDatasetFromText(text, `仓库文件 ${targetPath}`);
+    datasetInput.value = text;
+    showReadyState();
+  } catch (error) {
+    showError(error.message);
+  }
 }
 
 function handleSearch() {
   try {
-    const dataset = parseDataset(datasetInput.value.trim());
     const fields = getSelectedFields();
     const lineLengthFilter = getLineLengthFilter();
     const rules = getRules();
-    const results = searchDataset(dataset, fields, lineLengthFilter, rules);
+    const results = searchDataset(activeDataset, fields, lineLengthFilter, rules);
 
-    updateDatasetStatus(dataset.length);
+    updateDatasetStatus(activeDataset.length, activeDatasetLabel);
     renderResults(results);
   } catch (error) {
-    resultCount.textContent = "0 条结果";
-    resultList.innerHTML = `<div class="empty-state">${error.message}</div>`;
+    showError(error.message);
   }
 }
 
-loadSampleButton.addEventListener("click", () => {
+loadSampleButton.addEventListener("click", async () => {
   datasetInput.value = JSON.stringify(sampleDataset, null, 2);
-  updateDatasetStatus(sampleDataset.length);
+  await loadDatasetFromText(datasetInput.value, "内置示例数据");
+  showReadyState();
 });
 
+loadTextareaButton.addEventListener("click", handleTextareaLoad);
+loadFileButton.addEventListener("click", handleFileLoad);
+loadRepoButton.addEventListener("click", handleRepoLoad);
+refreshRepoListButton.addEventListener("click", loadRepoCatalog);
+repoFileSelect.addEventListener("change", () => {
+  if (repoFileSelect.value) {
+    repoPathInput.value = repoFileSelect.value;
+  }
+});
 addRuleButton.addEventListener("click", () => addRule());
 searchButton.addEventListener("click", handleSearch);
 
 addRule("明月", "");
+populateRepoFileOptions([]);
+loadRepoCatalog();

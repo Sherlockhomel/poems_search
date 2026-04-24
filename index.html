@@ -26,15 +26,56 @@
               加载示例数据
             </button>
           </div>
-          <p class="hint">
-            请输入 JSON 数组，格式如
-            <code>[{"title":"静夜思","author":"李白","content":"床前明月光，疑是地上霜。举头望明月，低头思故乡。"}]</code>
-          </p>
-          <textarea
-            id="datasetInput"
-            spellcheck="false"
-            placeholder='[{"title":"静夜思","author":"李白","content":"床前明月光，疑是地上霜。举头望明月，低头思故乡。"}]'
-          ></textarea>
+          <div class="source-grid">
+            <div class="source-card">
+              <h3>方式 A：粘贴 JSON</h3>
+              <p class="hint">
+                请输入 JSON 数组，格式如
+                <code>[{"title":"静夜思","author":"李白","content":"床前明月光，疑是地上霜。举头望明月，低头思故乡。"}]</code>
+              </p>
+              <textarea
+                id="datasetInput"
+                spellcheck="false"
+                placeholder='[{"title":"静夜思","author":"李白","content":"床前明月光，疑是地上霜。举头望明月，低头思故乡。"}]'
+              ></textarea>
+              <button id="loadTextareaButton" class="primary-button" type="button">
+                使用当前粘贴内容
+              </button>
+            </div>
+
+            <div class="source-card">
+              <h3>方式 B：上传本地 JSON 文件</h3>
+              <p class="hint">选择本机上的 `.json` 文件，页面会把它作为当前检索范围。</p>
+              <input id="fileInput" type="file" accept=".json,application/json" />
+              <button id="loadFileButton" class="primary-button" type="button">
+                使用上传文件
+              </button>
+            </div>
+
+            <div class="source-card">
+              <h3>方式 C：读取仓库中的 JSON</h3>
+              <p class="hint">
+                可直接选择仓库里的 JSON 文件，或手动输入相对路径，例如
+                <code>all_poems/tang_sample.json</code>
+              </p>
+              <div class="repo-source-controls">
+                <select id="repoFileSelect">
+                  <option value="">请选择仓库数据文件</option>
+                </select>
+                <button id="refreshRepoListButton" class="ghost-button" type="button">
+                  刷新列表
+                </button>
+              </div>
+              <input
+                id="repoPathInput"
+                type="text"
+                placeholder="all_poems/tang_sample.json 或完整 raw 链接"
+              />
+              <button id="loadRepoButton" class="primary-button" type="button">
+                使用仓库 JSON
+              </button>
+            </div>
+          </div>
           <div class="dataset-meta">
             <span id="datasetStatus">还没有导入数据</span>
           </div>
