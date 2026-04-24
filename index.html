@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>诗词检索</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">Poetry Finder</p>
+          <h1>在你给定的诗词范围内精准检索</h1>
+          <p class="hero-copy">
+            支持标题、作者、诗句字段筛选，支持五言/七言过滤，也支持多个关键词按字位匹配。
+          </p>
+        </div>
+      </header>
+
+      <main class="layout">
+        <section class="panel panel-input">
+          <div class="panel-head">
+            <h2>1. 导入诗词数据</h2>
+            <button id="loadSampleButton" class="ghost-button" type="button">
+              加载示例数据
+            </button>
+          </div>
+          <p class="hint">
+            请输入 JSON 数组，格式如
+            <code>[{"title":"静夜思","author":"李白","content":"床前明月光，疑是地上霜。举头望明月，低头思故乡。"}]</code>
+          </p>
+          <textarea
+            id="datasetInput"
+            spellcheck="false"
+            placeholder='[{"title":"静夜思","author":"李白","content":"床前明月光，疑是地上霜。举头望明月，低头思故乡。"}]'
+          ></textarea>
+          <div class="dataset-meta">
+            <span id="datasetStatus">还没有导入数据</span>
+          </div>
+        </section>
+
+        <section class="panel panel-search">
+          <div class="panel-head">
+            <h2>2. 设置检索条件</h2>
+            <button id="searchButton" class="primary-button" type="button">
+              开始检索
+            </button>
+          </div>
+
+          <div class="field-group">
+            <p class="group-title">检索范围</p>
+            <label><input type="checkbox" name="searchField" value="title" checked /> 标题</label>
+            <label><input type="checkbox" name="searchField" value="author" checked /> 作者</label>
+            <label><input type="checkbox" name="searchField" value="content" checked /> 诗句</label>
+          </div>
+
+          <div class="field-group">
+            <p class="group-title">句式过滤</p>
+            <label><input type="radio" name="lineLength" value="all" checked /> 不限制</label>
+            <label><input type="radio" name="lineLength" value="5" /> 五言</label>
+            <label><input type="radio" name="lineLength" value="7" /> 七言</label>
+          </div>
+
+          <div class="field-group">
+            <div class="panel-head compact">
+              <p class="group-title">关键词规则</p>
+              <button id="addRuleButton" class="ghost-button" type="button">
+                新增关键词
+              </button>
+            </div>
+            <div id="ruleList" class="rule-list"></div>
+            <p class="hint">字位从 1 开始。不填字位表示该关键词只要求“包含”。</p>
+          </div>
+        </section>
+
+        <section class="panel panel-results">
+          <div class="panel-head">
+            <h2>3. 检索结果</h2>
+            <span id="resultCount">0 条结果</span>
+          </div>
+          <div id="resultList" class="result-list">
+            <div class="empty-state">导入数据并设置条件后，结果会显示在这里。</div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <template id="ruleTemplate">
+      <div class="rule-item">
+        <input class="keyword-input" type="text" placeholder="关键词" />
+        <input class="position-input" type="number" min="1" step="1" placeholder="第几个字" />
+        <button class="remove-button" type="button">删除</button>
+      </div>
+    </template>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
