@@ -1,6 +1,6 @@
 # 诗词检索网站
 
-一个可直接部署到 GitHub Pages 的静态诗词检索网站。
+一个多功能静态诗词检索网站。
 
 示例数据见 [sample-data.json](sample-data.json)。
 
@@ -31,8 +31,6 @@
 ]
 ```
 
-## 本地使用
+## 使用
 
-直接打开 [index.html](index.html) 即可。
-
-如果你想部署到 GitHub Pages，推送到仓库后，在 GitHub 仓库设置里开启 Pages，并选择当前分支根目录作为发布源即可。
+[网站跳转]([index.html](https://sherlockhomel.github.io/poems_search/))
