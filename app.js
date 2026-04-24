@@ -126,7 +126,7 @@ function populateRepoFileOptions(files) {
 
 async function loadRepoCatalog() {
   try {
-    const response = await fetch("./all_poems/catalog.json", { cache: "no-store" });
+    const response = await fetch(".my_database.json", { cache: "no-store" });
     if (!response.ok) {
       throw new Error("未找到目录清单");
     }
