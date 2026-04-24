@@ -33,6 +33,6 @@
 
 ## 本地使用
 
-直接打开 [index.html](/Users/lishuaiyi/Documents/New%20project/index.html) 即可。
+直接打开 [index.html](index.html) 即可。
 
 如果你想部署到 GitHub Pages，推送到仓库后，在 GitHub 仓库设置里开启 Pages，并选择当前分支根目录作为发布源即可。
