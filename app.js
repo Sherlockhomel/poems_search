@@ -17,6 +17,7 @@ const sampleDataset = [
 ];
 
 const repoCatalogFallback = [
+  { label: "仓库主数据库 my_database.json", path: "my_database.json" },
   { label: "示例数据 sample-data.json", path: "sample-data.json" },
   { label: "all_poems 示例库", path: "all_poems/tang_sample.json" },
 ];
