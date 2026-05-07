@@ -18,7 +18,7 @@ const sampleDataset = [
 
 const repoCatalogFallback = [
   { label: "示例数据 sample-data.json", path: "sample-data.json" },
-  { label: "my_database", path: "my_database.json" },
+  { label: "all_poems 示例库", path: "all_poems/tang_sample.json" },
 ];
 
 let activeDataset = [];
@@ -62,11 +62,26 @@ function normalizeText(text) {
   return String(text || "").replace(/\s+/g, "");
 }
 
-function splitContentToLines(content) {
-  return normalizeText(content)
-    .split(/[，。！？；、]/)
-    .map((line) => line.trim())
+function splitContentToSentenceGroups(content) {
+  return String(content || "")
+    .replace(/\s+/g, "")
+    .split(/(?<=[。！？；])/)
+    .map((group) => group.trim())
     .filter(Boolean);
+}
+
+function matchesLineLength(sentenceGroup, lineLengthFilter) {
+  if (lineLengthFilter === "all") {
+    return true;
+  }
+
+  const expectedLength = Number(lineLengthFilter);
+  const segments = normalizeText(sentenceGroup)
+    .split(/[，、]/)
+    .map((segment) => segment.replace(/[。！？；]/g, "").trim())
+    .filter(Boolean);
+
+  return segments.length > 0 && segments.every((segment) => segment.length === expectedLength);
 }
 
 function parseDataset(rawInput) {
@@ -126,7 +141,7 @@ function populateRepoFileOptions(files) {
 
 async function loadRepoCatalog() {
   try {
-    const response = await fetch(".my_database.json", { cache: "no-store" });
+    const response = await fetch("./all_poems/catalog.json", { cache: "no-store" });
     if (!response.ok) {
       throw new Error("未找到目录清单");
     }
@@ -240,13 +255,13 @@ function searchDataset(dataset, fields, lineLengthFilter, rules) {
       }
 
       if (fields.includes("content")) {
-        const lines = splitContentToLines(poem.content);
-        const matchedLines = lines.filter((line) => {
-          if (lineLengthFilter !== "all" && line.length !== Number(lineLengthFilter)) {
+        const sentenceGroups = splitContentToSentenceGroups(poem.content);
+        const matchedLines = sentenceGroups.filter((sentenceGroup) => {
+          if (!matchesLineLength(sentenceGroup, lineLengthFilter)) {
             return false;
           }
 
-          return matchField(line, rules);
+          return matchField(sentenceGroup, rules);
         });
 
         if (matchedLines.length) {
